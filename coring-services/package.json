@@ -7,7 +7,9 @@
     "migrate:make": "tsx scripts/migrate.ts make",
     "migrate:up": "tsx scripts/migrate.ts up",
     "migrate:down": "tsx scripts/migrate.ts down",
-    "migrate:status": "tsx scripts/migrate.ts status"
+    "migrate:status": "tsx scripts/migrate.ts status",
+    "migrate:refresh": "npm run migrate:down && npm run migrate:up",
+    "commit:auth": "git add . && git commit -m \"feat: implement authentication module and core infrastructure\n\n- Add auth service with user registration flow\n- Add JWT token generation utilities with bcrypt password hashing\n- Add user entity, enum, and repository with database queries\n- Add customer-address and password-reset entities\n- Add auth controller, routes, and DTOs with validation\n- Add migration scripts for database schema management\n- Add validation middleware using class-validator\n- Add centralized error handling with AppError class\n- Add correlation ID middleware for request tracking\n- Add logger utility for structured logging\n- Add Express type extensions for request context\n- Add knexfile configuration\n- Update tsconfig with decorator support for class-validator\n- Install dependencies: bcrypt, jsonwebtoken, class-validator, class-transformer\n\nBREAKING CHANGE: Schema now requires ACCESS_TOKEN_SECRET and ACCESS_REFRESH_TOKEN_SECRET env vars\""
   },
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
