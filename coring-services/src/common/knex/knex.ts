@@ -1,24 +1,7 @@
 import knex from "knex";
-import {env } from '../config/env.config.js'
-import type { Knex  } from "knex";
-const config:Knex.Config = {
-    client: "pg",
-    connection : {
-        host : env.db.host,
-        port : env.db.port,
-        user : env.db.user,
-        password : env.db.password,
-        database : env.db.name
-    },
-    pool : {
-        max : env.db.poolMax
-    },
-    migrations : {
-        directory : '/migrations',
-        extension : 'ts'
-    }
-}
-export const db = knex(config);
+import { knexConfig } from "./knexConfig.js";
+
+export const db = knex(knexConfig);
 export async function PingDB() {
     await db.raw('SELECT 1');
 }
