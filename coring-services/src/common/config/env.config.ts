@@ -10,6 +10,7 @@ config({
     )
 });
 const schema = z.object({
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     PORT : z.string().default("5000"),
     DB_HOST : z.string().default("localhost"),
     DB_PORT : z.string().default("5432"),
@@ -26,6 +27,7 @@ const schema = z.object({
 })
 const paredSchema = schema.parse(process.env);
 export const env ={
+    nodeEnv: paredSchema.NODE_ENV,
     PORT : Number(paredSchema.PORT),
     db : {
         host : paredSchema.DB_HOST,

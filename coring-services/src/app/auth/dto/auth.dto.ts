@@ -19,3 +19,36 @@ export class RegisterDTO {
   @IsEnum(SystemRole, { message: "Invalid system role" })
   SystemRole!:SystemRole;
 }
+
+export class LoginDTO {
+    @IsEmail({}, { message: "Invalid email address" })
+    email!: string;
+
+    @IsString()
+    @Length(8, 50, { message: "Password must be between 8 and 50 characters" })
+    password!: string;
+}
+
+export class ForgetPaaaswordDTO {
+    @IsEmail()
+    email!:string;
+}
+
+export class ResetPasswordDTO {
+ @IsEmail()
+  email!:string;
+
+  @IsString()
+ 
+  otp!: string;
+
+    @Length(8, 50, { message: "Password must be between 8 and 50 characters" })
+  newPassword!: string;
+
+
+}
+
+export class RefreshTokenDTO {
+    @IsString()
+    refreshToken!: string;
+}

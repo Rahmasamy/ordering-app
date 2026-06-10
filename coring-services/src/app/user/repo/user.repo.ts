@@ -37,6 +37,15 @@ export async function selectUserByEmail(email: string) : Promise<User | undefine
    
    return user? toEntity(user):undefined;
 }
+
+export async function findUserById(id: bigint) : Promise<User | undefined> {
+    const user= await db("users").select(USER_COLUMNS)
+    .where({
+        id
+    }).whereNull("deleted_at").first()
+
+    return user? toEntity(user):undefined;
+}
 export async function findIfUserExists(email: string,phone:string ): Promise<boolean> {
    const raw = await db.raw(`SELECT EXISTS (SELECT 1 FROM users where email = ? and deleted_at is null OR phone = ?  and deleted_at is null) As exists`, [email, phone])
 
@@ -51,4 +60,16 @@ export async function createUserIfNotExists(user:Partial<User>) : Promise<User> 
         system_role:user.system_role
     }).returning(USER_COLUMNS)
     return toEntity(createdUser)
+}
+
+export async function updateUser(id: bigint, updates: { name?: string; phone?: string }): Promise<User> {
+    const [updatedUser] = await db("users")
+        .where({ id })
+        .update({
+            ...updates,
+            updated_at: new Date()
+        })
+        .returning(USER_COLUMNS);
+    
+    return toEntity(updatedUser);
 }
