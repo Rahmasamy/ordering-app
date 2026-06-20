@@ -5,3 +5,5 @@ export const unAuthorizedRegisterationError = new AppError("Unauthorized to regi
 export const NoUserFounderror = new AppError("No user found with that email",404)
 export const InvalidCredentialsError = new AppError("Invalid email or password",401)
 export const InvalidOTPError = new AppError("Invalid OTP",400)
+export const RestaurantInvalidDataError = new AppError("Invalid restaurant data,Resturnat data must be required",400)
+export const unAuthorizedError = new AppError("Unauthorized Credentials",403)

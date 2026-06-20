@@ -9,11 +9,13 @@ import type {
   LoginDTO,
   RegisterDTO,
   ResetPasswordDTO,
+  RestaurantUserRegisterDTO,
 } from "../dto/auth.dto.js";
 import {
   InvalidCredentialsError,
   InvalidOTPError,
   NoUserFounderror,
+  RestaurantInvalidDataError,
   unAuthorizedRegisterationError,
   UserAlreadyExistsError,
 } from "../error.js";
@@ -32,8 +34,12 @@ import {
 } from "../repo/auth.repo.js";
 import jwt from "jsonwebtoken";
 import { env } from "../../../common/config/env.config.js";
+import { restaurantService, RestaurantService } from "../../restaurant/service/restaurant.service.js";
+import { da } from "zod/locales";
+import { db } from "../../../common/knex/knex.js";
 
 export class AuthService {
+  constructor(private readonly resautrantService : RestaurantService){}
   register = async (data: RegisterDTO) => {
     // check if user exists
     if (data.SystemRole === SystemRole.SYSTEM_ADMIN) {
@@ -47,7 +53,13 @@ export class AuthService {
     const hashedPassword = await hashPassword(data.password);
     // create user
     const now = new Date();
-    const user = await createUserIfNotExists({
+    let user;
+    let restaurant;
+    const trx = await db.transaction()
+    try {
+      user = await createUserIfNotExists(
+       
+        {
       email: data.email,
       phone: data.phone,
       name: data.name,
@@ -55,12 +67,34 @@ export class AuthService {
       system_role: data.SystemRole,
       created_at: now,
       updated_at: now,
-    });
+    },trx
+  );
+     // if user of type resturant user, create resturant as well 
+      if(data.SystemRole === SystemRole.RESTAURANT_USER) {
+       if(!data.restaurnat) {
+        throw RestaurantInvalidDataError;
+       }
+       restaurant = await this.resautrantService.create(Number(user.id),{
+        restaurantName:data.restaurnat?.restaurantName,
+        primaryCountry:data.restaurnat?.primaryCountry,
+        logoUrl:data.restaurnat?.logoUrl
+       } as RestaurantUserRegisterDTO ,trx)
+    }
+    await trx.commit()
+    } catch(error) {
+      await trx.rollback()
+      console.log(error)
+      throw error;
+    }
+    
+   
+
+  
     // generate token and refresh token
     const tokenPayload = {
-      userId: user.id,
-      SystemRole: user.system_role,
-      email: user.email,
+      userId: user?.id,
+      SystemRole: user?.system_role,
+      email: user?.email,
     };
     const token = generateToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
@@ -74,6 +108,7 @@ export class AuthService {
         name: user.name,
         system_role: user.system_role,
       },
+      restaurant:data.SystemRole === SystemRole.RESTAURANT_USER ? restaurant : undefined
     };
   };
   login = async (data: LoginDTO) => {
@@ -170,4 +205,4 @@ export class AuthService {
   };
 }
 
-export const authService = new AuthService();
+export const authService = new AuthService(restaurantService);

@@ -1,6 +1,7 @@
 import { email } from "zod"
 import { db } from "../../../common/knex/knex.js"
 import { User } from "../entity/user.entity.js"
+import type { Knex } from "knex"
 
 const USER_COLUMNS = [
     "id",
@@ -51,8 +52,8 @@ export async function findIfUserExists(email: string,phone:string ): Promise<boo
 
    return raw.rows[0].exists
 }
-export async function createUserIfNotExists(user:Partial<User>) : Promise<User> {
-    const [createdUser] = await db("users").insert({
+export async function createUserIfNotExists(user:Partial<User>,conn:Knex = db) : Promise<User> {
+    const [createdUser] = await conn("users").insert({
         email:user.email,
         phone:user.phone,
         name:user.name,

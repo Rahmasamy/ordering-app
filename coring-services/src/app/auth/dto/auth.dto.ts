@@ -1,5 +1,6 @@
-import { IsEmail, IsEnum, IsString, Length } from "class-validator";
+import { IsEmail, IsEnum, IsOptional, IsString, Length, MinLength, ValidateNested } from "class-validator";
 import { SystemRole } from "../../user/entity/enum.js";
+import { Type } from "class-transformer";
 
 export class RegisterDTO {
   @IsEmail({}, { message: "Invalid email address" })
@@ -18,6 +19,11 @@ export class RegisterDTO {
  
   @IsEnum(SystemRole, { message: "Invalid system role" })
   SystemRole!:SystemRole;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RestaurantUserRegisterDTO)
+  restaurnat?: RestaurantUserRegisterDTO;
 }
 
 export class LoginDTO {
@@ -51,4 +57,19 @@ export class ResetPasswordDTO {
 export class RefreshTokenDTO {
     @IsString()
     refreshToken!: string;
+}
+
+export class RestaurantUserRegisterDTO {
+    @IsString()
+    @MinLength(2, { message: "Restaurant name must be at least 2 characters long" })
+    restaurantName!: string;
+
+
+    @IsOptional()
+    @IsString()
+    logoUrl?: string;
+
+    @IsString()
+    primaryCountry!: string;
+
 }
