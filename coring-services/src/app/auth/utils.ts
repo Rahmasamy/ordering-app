@@ -2,8 +2,8 @@ import { SystemRole } from './../user/entity/enum.js';
 import bcrypt from "bcrypt";
 import jwt, { type Secret } from "jsonwebtoken";
 import { randomInt, createHash } from "crypto";
-import { env } from "../../common/config/env.config.js";
 import type { Response } from 'express';
+import { env } from '../../lib/config/env.config.js';
 export async function hashPassword(password: string): Promise<string> {
   const hash = await bcrypt.hash(password, 10);
   return hash;
@@ -19,6 +19,9 @@ export function generateToken(jsonPayload: {
     userId: number | bigint;
     SystemRole:SystemRole;
     email:string;
+    restaurantRoleName?: string;
+    restaurantId?: number;
+    branchIds?: number[];
 }): string {
   console.log(
   env.auth.accessTokenExpiration,
@@ -36,6 +39,9 @@ export function generateRefreshToken(jsonPayload: {
     userId: number | bigint;
     SystemRole:SystemRole;
     email:string;
+    restaurantRoleName?: string;
+    restaurantId?: number;
+    branchIds?: number[];
 }): string {
   return jwt.sign(jsonPayload, env.auth.refreshTokenSecret as Secret, {
     expiresIn: env.auth.refreshTokenExpiration as any,

@@ -1,5 +1,5 @@
-import { email } from "zod"
-import { db } from "../../../common/knex/knex.js"
+
+import { db } from "../../../lib/knex/knex.js"
 import { User } from "../entity/user.entity.js"
 import type { Knex } from "knex"
 

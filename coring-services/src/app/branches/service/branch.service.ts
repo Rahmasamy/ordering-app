@@ -3,7 +3,9 @@ import { findRestaurantById } from "../../restaurant/repo/restaurant.repo.js";
 import { SystemRole } from "../../user/entity/enum.js";
 import type { CreateBranchDTO, UpdateBranchDTO, UpdateBranchStatusDTO } from "../dto/branch.dto.js";
 import { addBranch, getNearByBranches, findBranchesByRestaurant, findBranchById, updateBranch, updateBranchStatus } from "../repo/branch.repo.js";
+import { injectable } from "tsyringe";
 
+@injectable()
 export class BranchService {
 
     findNearby = async (lat:number, lng:number) => {

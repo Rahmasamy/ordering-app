@@ -23,7 +23,14 @@ const schema = z.object({
     ACCESS_TOKEN_SECRET: z.string(),
     ACCESS_TOKEN_EXPIRATION: z.string().default("1h"),
     ACCESS_REFRESH_TOKEN_SECRET: z.string(),
-    ACCESS_REFRESH_TOKEN_EXPIRATION: z.string().default("7d")
+    ACCESS_REFRESH_TOKEN_EXPIRATION: z.string().default("7d"),
+    CORS_ORIGINS: z.string().default("http://localhost:3000"),
+    REDIS_HOST: z.string().default("localhost"),
+    REDIS_PORT: z.string().default("6379"),
+    REDIS_PASSWORD: z.string().default(""),
+    
+
+
 })
 const paredSchema = schema.parse(process.env);
 export const env ={
@@ -44,5 +51,11 @@ export const env ={
         accessTokenExpiration : paredSchema.ACCESS_TOKEN_EXPIRATION,
         refreshTokenSecret : paredSchema.ACCESS_REFRESH_TOKEN_SECRET,
         refreshTokenExpiration : paredSchema.ACCESS_REFRESH_TOKEN_EXPIRATION
-    }
+    },
+    cors: paredSchema.CORS_ORIGINS.split(",").map((origin) => origin.trim()),
+    cache : {
+        host : paredSchema.REDIS_HOST,
+        port : Number(paredSchema.REDIS_PORT),
+        password : paredSchema.REDIS_PASSWORD
+    } 
 }

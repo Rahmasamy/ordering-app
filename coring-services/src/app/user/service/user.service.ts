@@ -2,7 +2,9 @@ import type { User } from "../entity/user.entity.js";
 import { NoUserFounderror } from "../error.js";
 import { findUserById, updateUser } from "../repo/user.repo.js";
 import type { UpdateUserDTO } from "../dto/user.dto.js";
+import { injectable } from "tsyringe";
 
+@injectable()
 export class UserService {
     async getUserById(id: bigint) : Promise<Partial<User> | undefined> {
         const user = await findUserById(id)

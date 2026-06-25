@@ -1,7 +1,8 @@
 import type { Knex } from "knex"
-import { db } from "../../../common/knex/knex.js"
 import  { Resturnat } from "../entity/resturant.entity.js"
 import { ResturnatStatus } from "../entity/resturant.enum.js"
+import { db } from "../../../lib/knex/knex.js"
+import { applyCursorPagination, applyFilterParams, type filterParams, type PaginationCursorParams } from "../../../pkg/pagination/pagination-cursor.js"
 
 const RESTURANT_COLUMNS = [
     "id",
@@ -69,8 +70,13 @@ export async function deleteRestaurant(id: number) {
         status : ResturnatStatus.INACTIVE
     }).where(id)
 }
-export async function getAllRestaurants() : Promise<Resturnat[]>{
-  const raws = await db("restaurant").select(RESTURANT_COLUMNS)
+export async function getAllRestaurants(params:PaginationCursorParams,filters:filterParams[]) : Promise<Resturnat[]>{
+ 
+   let query = db("restaurant").select(RESTURANT_COLUMNS)
+    query = applyFilterParams(query,filters);
+    query = applyCursorPagination(query,params)
+    const raws = await query;
+
   return raws.map(toEntity)
 }
 

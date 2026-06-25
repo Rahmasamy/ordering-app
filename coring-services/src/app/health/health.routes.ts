@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { PingDB } from "../../common/knex/knex.js";
+import { PingDB } from "../../lib/knex/knex.js";
+
 export const healthRoutes = Router();
 healthRoutes.get("/", async (req,res) => {
     try {

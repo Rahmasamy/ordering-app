@@ -1,19 +1,23 @@
 import type { NextFunction, Request, Response } from "express";
+import { sendSuccessResponse } from "../../../lib/http/response.js";
 import { restaurantService, type RestaurantService } from "../service/restaurant.service.js";
 import { CreateRestaurantDTO, UpdateRestaurantDTO, UpdateRestaurantStatusDTO } from "../dto/restaurant.dto.js";
-import { validateBody } from "../../../common/validation/validate.js";
+import { validateBody } from "../../../lib/validation/validate.js";
+import { injectable, inject } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens.js";
+import { parseFilters, parsePaginationQuery } from "../../../pkg/pagination/parse-query.js";
 
+@injectable()
 export class RestaurantController {
-    constructor(private readonly restaurantService: RestaurantService) {
+    constructor(@inject(TOKENS.RestaurantService) private readonly restaurantService: RestaurantService) {
     }
 
     getAllRestaurants = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const restaurants = await this.restaurantService.getAllRestaurants()
-            return res.status(200).json({
-                success: true,
-                data: restaurants,
-            })
+            const parsePaginationQueryResult = parsePaginationQuery(req.query)
+            const parseFilterQueryResult = parseFilters(req.query,["name","id","primaryCountry","status","createdAt","updatedAt"])
+            const restaurants = await this.restaurantService.getAllRestaurants(parsePaginationQueryResult,parseFilterQueryResult)
+            return sendSuccessResponse(res, restaurants);
         } catch (error) {
             next(error)
         }
@@ -23,7 +27,7 @@ export class RestaurantController {
         try {
             const { id } = req.params;
             const restaurant = await this.restaurantService.findById(Number(id));
-            return res.status(200).json({
+            return sendSuccessResponse(res, {
                 id: restaurant.id,
                 ownerId: restaurant.owner_id,
                 name: restaurant.name,
@@ -42,7 +46,7 @@ export class RestaurantController {
         try {
             const data = await validateBody(CreateRestaurantDTO, req.body);
             const result = await this.restaurantService.createWithOwner(data, req.user!.role);
-            return res.status(201).json({
+            return sendSuccessResponse(res, {
                 message: "Restaurant and owner created successfully",
                 restaurant: {
                     id: result.restaurant.id,
@@ -72,7 +76,7 @@ export class RestaurantController {
             const data = await validateBody(UpdateRestaurantDTO, req.body);
             const restaurant = await this.restaurantService.update(Number(id), data, Number(req.user!.userId), req.user!.role);
             
-            return res.status(200).json({
+            return sendSuccessResponse(res, {
                 message: "Restaurant updated successfully",
                 restaurant: {
                     id: restaurant.id,
@@ -94,7 +98,7 @@ export class RestaurantController {
             const data = await validateBody(UpdateRestaurantStatusDTO, req.body);
             const restaurant = await this.restaurantService.updateStatus(Number(id), data.status, req.user!.role);
             
-            return res.status(200).json({
+            return sendSuccessResponse(res, {
                 message: "Restaurant status updated successfully",
                 restaurant: {
                     id: restaurant.id,

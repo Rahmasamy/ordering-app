@@ -1,8 +1,9 @@
 import "reflect-metadata";
 import { createApp } from "./app.js";
 import http from "http";
-import { env } from "./common/config/env.config.js";
-import { db } from "./common/knex/knex.js";
+import { env } from "./lib/config/env.config.js";
+import { db } from "./lib/knex/knex.js";
+
 
 const app = createApp()
 const server = http.createServer(app)

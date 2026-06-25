@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { customerAddressController } from "../controllers/customeAddresses.controller.js";
-import { Auth } from "../../../common/auth/guard.js";
+import { CustomerAddressController } from "../controllers/customeAddresses.controller.js";
+import { TOKENS } from "../../../lib/di/tokens.js";
+import { container } from "../../../lib/di/container.js";
+import { Auth } from "../../../lib/auth/guard.js";
 
 export const customerAddressRoute = Router();
+const customerAddressController = container.resolve<CustomerAddressController>(TOKENS.CustomerAddressController);
 
 customerAddressRoute.get("/", Auth, customerAddressController.getAddresses);
 customerAddressRoute.post("/", Auth, customerAddressController.createAddress);

@@ -7,13 +7,18 @@ import type { CreateRestaurantDTO, UpdateRestaurantDTO } from "../dto/restaurant
 import { SystemRole } from "../../user/entity/enum.js"
 import { findIfUserExists, createUserIfNotExists } from "../../user/repo/user.repo.js"
 import { hashPassword } from "../../auth/utils.js"
-import { db } from "../../../common/knex/knex.js"
 import { unAuthorizedError } from "../../auth/error.js"
+import { db } from "../../../lib/knex/knex.js"
+import { injectable } from "tsyringe";
+import { buildPaginateResponse, type filterParams, type PaginationCursorParams } from "../../../pkg/pagination/pagination-cursor.js"
 
+
+@injectable()
 export class RestaurantService {
-    getAllRestaurants = async () => {
-          const raws= await getAllRestaurants()
-          return raws;
+    getAllRestaurants = async (params:PaginationCursorParams,filters:filterParams[]) => {
+          const raws= await getAllRestaurants(params,filters)
+        
+          return buildPaginateResponse(raws,params.limit,params.orderBy)
     }
     
     findById = async (id: number) => {

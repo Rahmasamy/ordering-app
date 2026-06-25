@@ -1,4 +1,3 @@
-import { AppError } from "../../../common/error/AppError.js";
 import type { CustomerAddress } from "../entity/customer-address.entity.js";
 import { CreateCustomerAddressDTO, UpdateCustomerAddressDTO } from "../dto/customeAddresses.dto.js";
 import {
@@ -9,7 +8,10 @@ import {
   deleteAddress as deleteAddressRepo,
   clearDefaultAddresses
 } from "../repo/customer-address.repo.js";
+import { AppError } from "../../../lib/error/AppError.js";
+import { injectable } from "tsyringe";
 
+@injectable()
 export class CustomerAddressService {
   async getAddresses(userId: bigint): Promise<CustomerAddress[]> {
     return await findAddressesByUserId(userId);

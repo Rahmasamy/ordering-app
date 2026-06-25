@@ -7,6 +7,9 @@ interface AuthPayload extends jwt.JwtPayload {
   userId: string;
   role: string;
   email: string;
+  restaurantRoleName?: string;
+  restaurantId?: number;
+  branchIds?: number[];
 }
 
 export function Auth(req: Request, res: Response, next: NextFunction) {

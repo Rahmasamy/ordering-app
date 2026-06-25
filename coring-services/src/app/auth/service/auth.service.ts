@@ -33,13 +33,21 @@ import {
   updatePassword,
 } from "../repo/auth.repo.js";
 import jwt from "jsonwebtoken";
-import { env } from "../../../common/config/env.config.js";
 import { restaurantService, RestaurantService } from "../../restaurant/service/restaurant.service.js";
-import { da } from "zod/locales";
-import { db } from "../../../common/knex/knex.js";
 
+import { activateMemberByUserId, findRestaurantMemberWithRole } from "../../rbac/repo/restaurant_member.repo.js";
+import { findBranchIdsByMemberId } from "../../rbac/repo/member-branch.repo.js";
+import { env } from "../../../lib/config/env.config.js";
+import { db } from "../../../lib/knex/knex.js";
+import { inject, injectable } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens.js";
+
+
+@injectable()
 export class AuthService {
-  constructor(private readonly resautrantService : RestaurantService){}
+  constructor(
+    @inject(TOKENS.RestaurantService)
+    private readonly resautrantService: RestaurantService) { }
   register = async (data: RegisterDTO) => {
     // check if user exists
     if (data.SystemRole === SystemRole.SYSTEM_ADMIN) {
@@ -58,38 +66,38 @@ export class AuthService {
     const trx = await db.transaction()
     try {
       user = await createUserIfNotExists(
-       
+
         {
-      email: data.email,
-      phone: data.phone,
-      name: data.name,
-      password_hash: hashedPassword,
-      system_role: data.SystemRole,
-      created_at: now,
-      updated_at: now,
-    },trx
-  );
-     // if user of type resturant user, create resturant as well 
-      if(data.SystemRole === SystemRole.RESTAURANT_USER) {
-       if(!data.restaurnat) {
-        throw RestaurantInvalidDataError;
-       }
-       restaurant = await this.resautrantService.create(Number(user.id),{
-        restaurantName:data.restaurnat?.restaurantName,
-        primaryCountry:data.restaurnat?.primaryCountry,
-        logoUrl:data.restaurnat?.logoUrl
-       } as RestaurantUserRegisterDTO ,trx)
-    }
-    await trx.commit()
-    } catch(error) {
+          email: data.email,
+          phone: data.phone,
+          name: data.name,
+          password_hash: hashedPassword,
+          system_role: data.SystemRole,
+          created_at: now,
+          updated_at: now,
+        }, trx
+      );
+      // if user of type resturant user, create resturant as well 
+      if (data.SystemRole === SystemRole.RESTAURANT_USER) {
+        if (!data.restaurnat) {
+          throw RestaurantInvalidDataError;
+        }
+        restaurant = await this.resautrantService.create(Number(user.id), {
+          restaurantName: data.restaurnat?.restaurantName,
+          primaryCountry: data.restaurnat?.primaryCountry,
+          logoUrl: data.restaurnat?.logoUrl
+        } as RestaurantUserRegisterDTO, trx)
+      }
+      await trx.commit()
+    } catch (error) {
       await trx.rollback()
       console.log(error)
       throw error;
     }
-    
-   
 
-  
+
+
+
     // generate token and refresh token
     const tokenPayload = {
       userId: user?.id,
@@ -108,7 +116,7 @@ export class AuthService {
         name: user.name,
         system_role: user.system_role,
       },
-      restaurant:data.SystemRole === SystemRole.RESTAURANT_USER ? restaurant : undefined
+      restaurant: data.SystemRole === SystemRole.RESTAURANT_USER ? restaurant : undefined
     };
   };
   login = async (data: LoginDTO) => {
@@ -118,6 +126,21 @@ export class AuthService {
       throw NoUserFounderror;
     }
     // verify password
+    let resturnactMemberInfo = null;
+    let branchIds: Array<number> = []
+    if (user.system_role === SystemRole.RESTAURANT_USER) {
+      const memberData = await findRestaurantMemberWithRole(Number(user.id));
+      branchIds = await findBranchIdsByMemberId(memberData.member.id)
+      if (memberData) {
+        resturnactMemberInfo = {
+          restaurantRoleName: memberData.roleName,
+          restaurantId: memberData.member.restaurantId,
+          branchIds:branchIds
+        }
+
+      }
+
+    }
     const isMatch = await comparePassword(data.password, user.password_hash);
     if (!isMatch) {
       throw InvalidCredentialsError;
@@ -127,6 +150,7 @@ export class AuthService {
       userId: user.id,
       SystemRole: user.system_role,
       email: user.email,
+      ...resturnactMemberInfo
     };
     const token = generateToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
@@ -179,6 +203,8 @@ export class AuthService {
 
     // update password reset consumed at
     await consumePasswordReset(passwordReset.id);
+
+    return user;
   };
 
   refreshAccessToken = async (refreshToken: string) => {
@@ -203,6 +229,14 @@ export class AuthService {
       token: newAccessToken,
     };
   };
+
+
+  acceptInvite = async (data: ResetPasswordDTO) => {
+    const user = await this.resetPassword(data)
+    // activate member
+    await activateMemberByUserId(Number(user.id))
+  }
+
 }
 
 export const authService = new AuthService(restaurantService);

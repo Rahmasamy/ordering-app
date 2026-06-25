@@ -1,4 +1,4 @@
-import { db } from "../../../common/knex/knex.js"
+import { db } from "../../../lib/knex/knex.js";
 import  { PasswordReset } from "../entity/password-reset.entity.js"
 import { generateOTP, hashOTP } from "../utils.js";
 
@@ -22,7 +22,9 @@ export function toPasswordResetEntity(raw:any):PasswordReset {
     })
 }
 
-export async function createPasswordReset(userId: bigint) {
+import type { Knex } from "knex";
+
+export async function createPasswordReset(userId: bigint, conn: Knex = db) {
     // Generate OTP
     const otp = generateOTP();
     
@@ -33,7 +35,7 @@ export async function createPasswordReset(userId: bigint) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     
     // Insert password reset record
-    const result = await db("password_resets").insert({
+    const result = await conn("password_resets").insert({
         user_id: userId,
         otp_hash: hashedOtp,
         expires_at: expiresAt,

@@ -1,16 +1,20 @@
 import type { NextFunction, Request, Response } from "express";
+import { sendSuccessResponse } from "../../../lib/http/response.js";
 import { authService, AuthService } from "../service/auth.service.js";
-import { validateBody } from "../../../common/validation/validate.js";
 import { ForgetPaaaswordDTO, LoginDTO, RefreshTokenDTO, RegisterDTO, ResetPasswordDTO } from "../dto/auth.dto.js";
 import { setAccessTokenCookie, setRefreshTokenCookie } from "../utils.js";
+import { validateBody } from "../../../lib/validation/validate.js";
+import { injectable, inject } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens.js";
 
+@injectable()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@inject(TOKENS.AuthService) private readonly authService: AuthService) {}
   register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await validateBody(RegisterDTO, req.body);
       const result = await this.authService.register(data);
-      res.status(201).json(result);
+      sendSuccessResponse(res, result, 201);
     } catch (error) {
       return next(error);
     }
@@ -22,7 +26,7 @@ export class AuthController {
             const result = await this.authService.login(data);
             setAccessTokenCookie(res, result.token);
             setRefreshTokenCookie(res, result.refreshToken);
-            res.status(200).json(result);
+            sendSuccessResponse(res, result);
         } catch (error) {
             return next(error);
         }
@@ -32,19 +36,34 @@ export class AuthController {
         // validate body    
         const data = await validateBody(ForgetPaaaswordDTO, req.body);
         const result = await this.authService.forgetPassword(data);
-        res.status(200).json({
+        sendSuccessResponse(res, {
             "message ": "Email has been sent successfully!"
         });
         } catch (error) {   
             return next(error);
         }
     }
+
+
+     acceptInvite = async(req: Request, res: Response, next: NextFunction) => {
+        try{
+            const data = await validateBody(ResetPasswordDTO, req.body);
+            await this.authService.acceptInvite(data);
+            sendSuccessResponse(res, {
+                "message": "Invitation accepted successfully, please login again",
+            });
+        }
+        catch(err) {
+            next(err);
+        }
+    }
+
     resetPassword = async (req: Request, res: Response, next: NextFunction) => {
         try {
             // validate body
             const data = await validateBody(ResetPasswordDTO, req.body);
             await this.authService.resetPassword(data);
-            res.status(200).json({
+            sendSuccessResponse(res, {
                 "message ": "Password has been reset successfully!"
             });
         }
@@ -59,7 +78,7 @@ export class AuthController {
             const data = await validateBody(RefreshTokenDTO, { refreshToken });
             const result = await this.authService.refreshAccessToken(data.refreshToken);
             setAccessTokenCookie(res, result.token);
-            res.status(200).json({
+            sendSuccessResponse(res, {
                 message: "success"
             });
         } catch (error) {

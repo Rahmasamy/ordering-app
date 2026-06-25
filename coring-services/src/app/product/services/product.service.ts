@@ -6,7 +6,9 @@ import { RestaurantNotFoundError, UnauthorizedProductAccessError, ProductNotFoun
 import { CreateProductDTO, UpdateProductDTO } from "../dto/product.dto.js";
 import { SystemRole } from "../../user/entity/enum.js";
 import type { Product } from "../entity/product.entity.js";
+import { injectable } from "tsyringe";
 
+@injectable()
 export class ProductService {
     async findCategories(restaurantId: number) {
         return await findCategoriesByRestaurantId(restaurantId);

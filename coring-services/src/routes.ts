@@ -6,6 +6,7 @@ import { customerAddressRoute } from "./app/customer-address/routes/customeAddre
 import { restaurantRouter } from "./app/restaurant/routes/restaurant.routes.js";
 import { branchRouter } from "./app/branches/route/branch.route.js";
 import { productRouter } from "./app/product/route/routes.js";
+import { membersRouter } from "./app/rbac/route/routes.js";
 
 export const routes = Router();
 
@@ -16,3 +17,4 @@ routes.use("/customer/addresses", customerAddressRoute);
 routes.use("/restaurant",restaurantRouter);
 routes.use("/",branchRouter);
 routes.use("/",productRouter);
+routes.use("/",membersRouter);

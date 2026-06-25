@@ -1,4 +1,4 @@
-import { db } from "../../../common/knex/knex.js";
+import { db } from "../../../lib/knex/knex.js";
 import type { BranchProductDto } from "../dto/product.dto.js";
 import  { Product } from "../entity/product.entity.js";
 

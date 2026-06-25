@@ -1,9 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
-import { productService } from "../services/product.service.js";
-import { validateBody } from "../../../common/validation/validate.js";
+import { sendSuccessResponse } from "../../../lib/http/response.js";
+import { productService, type ProductService } from "../services/product.service.js";
 import { CreateProductDTO, UpdateProductDTO } from "../dto/product.dto.js";
+import { validateBody } from "../../../lib/validation/validate.js";
+import { injectable, inject } from "tsyringe";
+import { TOKENS } from "../../../lib/di/tokens.js";
 
+@injectable()
 export class ProductController {
+    constructor(@inject(TOKENS.ProductService) private readonly productService: ProductService) {}
     async findCategories(req: Request, res: Response, next: NextFunction) {
         try {
             const restaurantId = parseInt(req.params.restaurantId as string, 10);
@@ -12,8 +17,8 @@ export class ProductController {
                 return;
             }
             
-            const categories = await productService.findCategories(restaurantId);
-            res.status(200).json({ data: categories });
+            const categories = await this.productService.findCategories(restaurantId);
+            sendSuccessResponse(res, categories);
         } catch (error) {
             next(error);
         }
@@ -27,8 +32,8 @@ export class ProductController {
                 return;
             }
             
-            const responseData = await productService.findByBranch(branchId);
-            res.status(200).json(responseData);
+            const responseData = await this.productService.findByBranch(branchId);
+            sendSuccessResponse(res, responseData);
         } catch (error) {
             next(error);
         }
@@ -46,8 +51,8 @@ export class ProductController {
             const userId = parseInt(user.userId, 10);
             const role = user.role;
             
-            const responseData = await productService.findByRestaurant(restaurantId, userId, role);
-            res.status(200).json(responseData);
+            const responseData = await this.productService.findByRestaurant(restaurantId, userId, role);
+            sendSuccessResponse(res, responseData);
         } catch (error) {
             next(error);
         }
@@ -61,8 +66,8 @@ export class ProductController {
                 return;
             }
             
-            const product = await productService.findById(id);
-            res.status(200).json(product);
+            const product = await this.productService.findById(id);
+            sendSuccessResponse(res, product);
         } catch (error) {
             next(error);
         }
@@ -82,8 +87,8 @@ export class ProductController {
             
             const payload = await validateBody(CreateProductDTO, req.body);
             
-            const responseData = await productService.create(restaurantId, userId, role, payload);
-            res.status(201).json(responseData);
+            const responseData = await this.productService.create(restaurantId, userId, role, payload);
+            sendSuccessResponse(res, responseData, 201);
         } catch (error) {
             next(error);
         }
@@ -110,12 +115,12 @@ export class ProductController {
             
             const payload = await validateBody(UpdateProductDTO, req.body);
             
-            const responseData = await productService.update(id, branchId, userId, role, payload);
-            res.status(200).json(responseData);
+            const responseData = await this.productService.update(id, branchId, userId, role, payload);
+            sendSuccessResponse(res, responseData);
         } catch (error) {
             next(error);
         }
     }
 }
 
-export const productController = new ProductController();
+export const productController = new ProductController(productService);

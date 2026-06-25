@@ -1,6 +1,6 @@
 import type { Knex } from "knex";
 import  { Branch } from "../entity/banche.entity.js";
-import { db } from "../../../common/knex/knex.js";
+import { db } from "../../../lib/knex/knex.js";
 
 const BRANCH_COLUMNS = [
   "id",
@@ -114,4 +114,4 @@ export async function updateBranchStatus(id: number, payload: any): Promise<Bran
 
     const [updated] = await db("restaurant_branches").where("id", id).update(updatePayload).returning(BRANCH_COLUMNS);
     return toEntity(updated);
-}
+}

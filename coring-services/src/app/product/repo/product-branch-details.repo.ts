@@ -1,4 +1,4 @@
-import { db } from "../../../common/knex/knex.js";
+import { db } from "../../../lib/knex/knex.js";
 
 export async function updateBranchDetails(productId: number, branchId: number, details: { price?: number | undefined; stock?: number | undefined; isAvailable?: boolean | undefined }) {
     const updatePayload: any = {};
