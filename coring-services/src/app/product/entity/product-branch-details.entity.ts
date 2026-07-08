@@ -1,14 +1,17 @@
-export class ProductCategoryBranchDetails {
+export class ProductBranchDetails {
+    id: number;
+    branchId: number;
+    productId: number;
+    price: number;
+    stock: number;
+    isAvailable: boolean;
 
-    id?: number;
-    product_id?: number;
-    branch_id?: number;
-    price?: number;
-    stock?: number;
-    is_available?: boolean;
-    created_at?: Date;
-
-    constructor(detailsPartial?: Partial<ProductCategoryBranchDetails>) {
-        Object.assign(this, detailsPartial);
+    constructor(data: Partial<ProductBranchDetails>) {
+        this.id = data.id!;
+        this.branchId = data.branchId!;
+        this.productId = data.productId!;
+        this.price = data.price ?? 0;
+        this.stock = data.stock ?? 0;
+        this.isAvailable = data.isAvailable ?? false;
     }
 }

@@ -1,56 +1,41 @@
-import { Redis } from "ioredis";
-import type { ICacheProvider } from "./ICacheProvider.js";
+import Redis from "ioredis";
+import type {ICacheProvider} from "./cache.interface";
 
-export interface CacheClient {
-  port:number;
-  host:string;
-  password?:string;
-  
+export interface RedisConfig {
+    host: string;
+    port: number;
+    password?: string;
 }
 
-export class RedisProvider implements ICacheProvider {
-    private readonly client:Redis;
-constructor(private readonly cache:CacheClient) {
-    this.client = new Redis({
-      host: this.cache.host,
-      port: this.cache.port,
-      password: this.cache.password,
-      lazyConnect:true,
-      maxRetriesPerRequest:3,
-      
-    });
+export class RedisCacheProvider implements ICacheProvider {
+    private readonly client: Redis;
 
-    this.client.on('error',(err) => {
-      console.log(`redis connection error:${err.message}`);
-      
-    })
-    this.client.connect().then(() => {
-      console.log(`redis connected successfully`);
-      
-    }).catch((err) => {
-      console.log(`redis connection error:${err.message}`);
-      
-    })
+    constructor(private readonly config: RedisConfig) {
+        this.client = new Redis({
+            host: config.host,
+            port: config.port,
+            password: config.password,
+            lazyConnect: true,
+            maxRetriesPerRequest: 3
+        });
 
-
-}
-
-async get(key:string):Promise<any>{
-    return await this.client.get(key);
-
-}
-async set(key:string,value:any,ttl?:number):Promise<void>{
-    if(ttl) {
-        await this.client.set(key,value,'EX',ttl)
+        this.client.on("error", (err) => {console.error("Redis Error:", err.message);});
+        this.client.connect().catch((err) => {console.error("Redis Connect Error:", err)});
     }
-    else{
-        await this.client.set(key,value)
+    async set(key: string, value: any, ttlSeconds?: number): Promise<any> {
+        if(ttlSeconds) {
+            await this.client.set(key, value, "EX", ttlSeconds);
+        } else {
+            await this.client.set(key, value);
+        }
+
     }
-}
 
-async del(key:string):Promise<void>{
-    await this.client.del(key)
+    async get(key: string): Promise<any> {
+        return this.client.get(key);
+    }
 
-}
-
+    async del(key: string): Promise<any> {
+       return this.client.del(key);
+    }
 }

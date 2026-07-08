@@ -1,21 +1,24 @@
-import "reflect-metadata";
-import { createApp } from "./app.js";
-import http from "http";
-import { env } from "./lib/config/env.config.js";
-import { db } from "./lib/knex/knex.js";
-
+import "reflect-metadata"
+import http from "http"
+import {createApp} from './app'
+import { env } from './lib/config/env'
+import {db} from './lib/knex/knex'
+import {logger} from "./lib/logger/logger";
 
 const app = createApp()
-const server = http.createServer(app)
-server.listen(env.PORT,( ) => {
-    console.log(`server is listening on port ${env.PORT}`)
+const server = http.createServer(app);
+
+server.listen(env.port, ()=> {
+    logger.info(`Server listening on ${env.port}`);
 })
-async function gracefulShutdown() {
-    server.close(async() => {
-    console.log("server shuttdown")
-      await db.destroy()
-      process.exit(0);
+
+async function shutdown() {
+    server.close(async()=> {
+        console.log("Database shutdown");
+        await db.destroy();
+        process.exit(0);
     })
 }
-process.on("SIGINT",gracefulShutdown);
-process.on("SIGTERM",gracefulShutdown);
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

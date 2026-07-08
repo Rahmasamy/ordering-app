@@ -1,35 +1,38 @@
-import { container } from "../di/container.js";
-import { TOKENS } from "../di/tokens.js";
-import type { ICacheProvider } from "../../pkg/cache/ICacheProvider.js";
-import type { NextFunction, Request, Response } from "express";
+import {Request, Response, NextFunction} from "express";
+import {ICacheProvider} from "../../pkg/cache/cache.interface";
+import {container} from "../di/container";
+import {TOKENS} from "../di/tokens";
 
-export function withCache(userScope: boolean = true, ttl: number) {
+export function withCache(ttl = 3600, userScoped = false) {
     return async (req: Request, res: Response, next: NextFunction) => {
-        const cacheProvider = container.resolve<ICacheProvider>(TOKENS.CacheProvider);
-        let cacheKey = `${req.originalUrl}:${req.method}`
-        if (userScope) {
-            cacheKey += `:${req.user?.userId}`;
-        }
+        try {
+            const cacheProvider: ICacheProvider = container.resolve(TOKENS.CacheProvider);
 
-        const cachedValue = await cacheProvider.get<string>(cacheKey);
-        if (cachedValue) {
-            res.setHeader("X-Cache-Hit", "true");
-            return res.status(200).json(JSON.parse(cachedValue))
-        }
-        // Call the original function and store the result in cache
-        const originalJson = res.json.bind(res)
-        res.json = ((body: any) => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-                // Fire and forget cache set so we don't block the response and return a Promise
-                cacheProvider.set(cacheKey, JSON.stringify(body), ttl).catch(console.error);
-                res.setHeader("X-Cache-Hit", "false");
+            let key = `${req.method}:${req.originalUrl}`;
+
+            if (userScoped) {
+                key = `${key}:${req.user?.userId}`;
             }
-            return originalJson(body);
-        }) as any;
-        return next();
 
+            const cached = await cacheProvider.get(key);
+            if (cached) {
+                res.setHeader("X-Cache", "HIT");
+                return res.status(200).json(JSON.parse(cached));
+            }
 
+            const originalJson = res.json.bind(res);
 
-
+            res.json = ((body: any) => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    cacheProvider.set(key, JSON.stringify(body), ttl)
+                }
+                res.setHeader("X-Cache", "MISS");
+                return originalJson(body);
+            });
+            next();
+        }
+        catch (err) {
+            next(err);
+        }
     }
 }

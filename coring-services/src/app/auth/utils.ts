@@ -1,97 +1,48 @@
-import { SystemRole } from './../user/entity/enum.js';
-import bcrypt from "bcrypt";
-import jwt, { type Secret } from "jsonwebtoken";
-import { randomInt, createHash } from "crypto";
-import type { Response } from 'express';
-import { env } from '../../lib/config/env.config.js';
+import bcrypt from 'bcrypt';
+import jwt, {SignOptions} from "jsonwebtoken";
+import {env} from "../../lib/config/env";
+import crypto from "crypto";
+
 export async function hashPassword(password: string): Promise<string> {
-  const hash = await bcrypt.hash(password, 10);
-  return hash;
-}
-export async function comparePassword(
-  password: string,
-  hash: string,
-): Promise<boolean> {
-  return await bcrypt.compare(password, hash);
+    return bcrypt.hash(password, 10);
 }
 
-export function generateToken(jsonPayload: {
-    userId: number | bigint;
-    SystemRole:SystemRole;
-    email:string;
-    restaurantRoleName?: string;
+export interface JwtPayload {
+    userId: number;
+    email: string;
+    role: string;
+    // for restaurant users only
     restaurantId?: number;
+    restaurantRole?: string;
     branchIds?: number[];
-}): string {
-  console.log(
-  env.auth.accessTokenExpiration,
-  typeof env.auth.accessTokenExpiration
-);
-  const token = jwt.sign(jsonPayload, env.auth.accessTokenSecret as Secret, {
-
-    expiresIn: env.auth.accessTokenExpiration as any,
-  });
-  console.log(jwt.decode(token));
-  return token;
 }
 
-export function generateRefreshToken(jsonPayload: {
-    userId: number | bigint;
-    SystemRole:SystemRole;
-    email:string;
-    restaurantRoleName?: string;
-    restaurantId?: number;
-    branchIds?: number[];
-}): string {
-  return jwt.sign(jsonPayload, env.auth.refreshTokenSecret as Secret, {
-    expiresIn: env.auth.refreshTokenExpiration as any,
-  });
+export function createAccessToken(payload: JwtPayload) : string {
+    const options : SignOptions = {expiresIn: env.jwt.accessExpiresIn as SignOptions["expiresIn"]}
+    return jwt.sign(payload,env.jwt.accessSecret, options);
 }
 
-export function generateOTP(length: number = 6): string {
-  return randomInt(1000000, 9999999).toString()
+export function createRefreshToken(payload: JwtPayload) : string {
+    const options : SignOptions = {expiresIn: env.jwt.refreshExpiresIn as SignOptions["expiresIn"]}
+    return jwt.sign(payload,env.jwt.refreshSecret, options);
 }
 
-export function hashOTP(otp: string): Promise<string> {
-  return Promise.resolve(createHash("sha256").update(otp).digest("hex"));
+export function verifyAccessToken(token: string): JwtPayload {
+    return jwt.verify(token, env.jwt.accessSecret) as JwtPayload;
 }
 
-export function verifyOTP(otp: string, hash: string): boolean {
-  const hashedOtp = createHash("sha256").update(otp).digest("hex");
-  return hashedOtp === hash;
+export function verifyRefreshToken(token: string): JwtPayload {
+    return jwt.verify(token, env.jwt.refreshSecret) as JwtPayload;
 }
 
-export function setAccessTokenCookie(res: Response, token: string): void {
-  res.cookie("access_token", token, {
-    httpOnly: true,
-    secure: env.nodeEnv === "production",
-    sameSite: "strict",
-    maxAge: parseTokenExpiration(env.auth.accessTokenExpiration),
-  });
+export function comparePassword(passwordInput: string, hashedPassword: string) {
+    return bcrypt.compare(passwordInput, hashedPassword);
 }
 
-export function setRefreshTokenCookie(res: Response, refreshToken: string): void {
-  res.cookie("refresh_token", refreshToken, {
-    httpOnly: true,
-    path: "/auth/refresh-token",
-    secure: env.nodeEnv === "production",
-    sameSite: "strict",
-    maxAge: parseTokenExpiration(env.auth.refreshTokenExpiration),
-  });
+export function generateOTP(): string {
+    return crypto.randomInt(100000,999999).toString()
 }
 
-function parseTokenExpiration(expiration: string | number): number {
-  if (typeof expiration === "number") {
-    return expiration * 1000;
-  }
-  // Parse string like "1h", "7d", etc.
-  const num = parseInt(expiration);
-  if (expiration.includes("h")) {
-    return num * 60 * 60 * 1000;
-  } else if (expiration.includes("d")) {
-    return num * 24 * 60 * 60 * 1000;
-  } else if (expiration.includes("m")) {
-    return num * 60 * 1000;
-  }
-  return num * 1000;
+export function hashOTP(otp: string) {
+    return crypto.createHash("sha256").update(otp).digest("hex");
 }

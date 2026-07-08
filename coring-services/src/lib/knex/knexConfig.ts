@@ -1,13 +1,13 @@
 
-import {env } from '../config/env.config.js'
-import type { Knex  } from "knex";
+import { env } from '../config/env';
+import type { Knex } from "knex";
 
 const knexConfig:Knex.Config = {
     client: "pg",
     connection : {
         host : env.db.host,
         port : env.db.port,
-        user : env.db.user,
+        user : env.db.username,
         password : env.db.password,
         database : env.db.name
     },
@@ -15,8 +15,12 @@ const knexConfig:Knex.Config = {
         max : env.db.poolMax
     },
     migrations : {
-        directory : env.db.migrationsDirectory,
-        extension : env.db.migrationsExtension
+        directory : env.db.migrationDirectory,
+        extension : env.db.migrationExtension
+    },
+    seeds : {
+        directory : "./src/seeds",
+        extension : "ts"
     }
 }
 

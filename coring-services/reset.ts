@@ -1,0 +1,1 @@
+import knexConfig from './src/lib/knex/knexConfig'; import knex from 'knex'; const db = knex(knexConfig); async function run() { await db.raw('DROP SCHEMA public CASCADE'); await db.raw('CREATE SCHEMA public'); console.log('done'); process.exit(0); } run();

@@ -1,73 +1,145 @@
-import { IsString, IsOptional, IsNotEmpty, IsNumber, IsBoolean } from "class-validator";
+import {IsString, IsNotEmpty, IsOptional, IsNumber, IsInt, Min, IsBoolean} from "class-validator";
 
 export class CreateProductDTO {
     @IsString()
     @IsNotEmpty()
     name!: string;
 
-    @IsString()
     @IsOptional()
+    @IsString()
     description?: string;
 
-    @IsString()
     @IsOptional()
+    @IsString()
     imageUrl?: string;
 
-    @IsString()
     @IsOptional()
-    categoryName?: string;
-}
-
-export class UpdateProductDTO {
     @IsString()
-    @IsOptional()
-    name?: string;
-
-    @IsString()
-    @IsOptional()
-    description?: string;
-
-    @IsString()
-    @IsOptional()
-    imageUrl?: string;
-
-    @IsString()
-    @IsOptional()
     categoryName?: string;
 
-    @IsNumber()
     @IsOptional()
-    price?: number;
+    @IsBoolean()
+    isTrending?: boolean;
 
-    @IsNumber()
     @IsOptional()
+    @IsBoolean()
+    isChefSpecial?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    isPopular?: boolean;
+
+    @IsOptional()
+    @IsInt()
+    calories?: number;
+
+    @IsOptional()
+    @IsBoolean()
+    isDairyFree?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    containsGluten?: boolean;
+
+    @IsOptional()
+    @IsInt()
+    reviewsCount?: number;
+
+    @IsOptional()
+    @IsNumber()
+    rating?: number;
+
+    @IsOptional()
+    imageUrls?: string[];
+
+    @IsOptional()
+    donenessOptions?: string[];
+
+    @IsOptional()
+    addons?: any[];
+
+    @IsOptional()
+    @IsInt()
+    @Min(0)
     stock?: number;
 
-    @IsBoolean()
     @IsOptional()
+    @IsBoolean()
     isAvailable?: boolean;
 }
 
-export interface BranchProductDto {
-    id: number;
-    name: string;
-    description: string;
-    imageUrl: string;
-    restaurantId: number;
-    categoryId: number;
-    categoryName: string;
-    price: number;
-    stock: number;
-    isAvailable: boolean;
+export class UpdateProductDTO {
+    @IsOptional()
+    @IsString()
+    @IsNotEmpty()
+    name?: string;
+
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsOptional()
+    @IsString()
+    imageUrl?: string;
+
+    @IsOptional()
+    @IsString()
+    categoryName?: string;
+
+    @IsOptional()
+    @IsBoolean()
+    isTrending?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    isChefSpecial?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    isPopular?: boolean;
+
+    @IsOptional()
+    @IsInt()
+    calories?: number;
+
+    @IsOptional()
+    @IsBoolean()
+    isDairyFree?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    containsGluten?: boolean;
+
+    @IsOptional()
+    @IsInt()
+    reviewsCount?: number;
+
+    @IsOptional()
+    @IsNumber()
+    rating?: number;
+
+    @IsOptional()
+    imageUrls?: string[];
+
+    @IsOptional()
+    donenessOptions?: string[];
+
+    @IsOptional()
+    addons?: any[];
+
+    // branch-level overrides (requires branchId query param)
+    @IsOptional()
+    @IsInt()
+    @Min(0)
+    price?: number;
+
+    @IsOptional()
+    @IsInt()
+    @Min(0)
+    stock?: number;
+
+    @IsOptional()
+    @IsBoolean()
+    isAvailable?: boolean;
 }
 
-export interface ProductDto {
-    id: number;
-    name: string;
-    description: string;
-    imageUrl: string;
-    restaurantId: number;
-    categoryId: number;
-    createdAt: string;
-    updatedAt: string;
-}

@@ -1,36 +1,42 @@
-import { IsString, IsEmail, MinLength, IsOptional, IsUrl, IsEnum, ValidateNested, IsNotEmpty } from "class-validator";
-import { Type } from "class-transformer";
+import {Type} from "class-transformer";
+import {IsString, IsNotEmpty, IsOptional, IsEnum, IsEmail, MinLength, MaxLength, IsStrongPassword, ValidateNested} from "class-validator";
+import {RestaurantStatus} from "../enums";
 
 export class CreateRestaurantOwnerDTO {
     @IsEmail()
-    @IsNotEmpty()
     email!: string;
 
-    @IsString()
-    @IsNotEmpty()
+    @MinLength(10)
+    @MaxLength(11)
     phone!: string;
 
     @IsString()
-    @IsNotEmpty()
+    @MinLength(1)
     name!: string;
 
-    @IsString()
-    @MinLength(6)
+    @IsStrongPassword({
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+    }, {
+        message: 'Password is not strong enough. It must contain at least 8 characters, one uppercase letter, one lowercase letter, one number.',
+    })
     password!: string;
 }
 
 export class CreateRestaurantDTO {
     @ValidateNested()
     @Type(() => CreateRestaurantOwnerDTO)
-    @IsNotEmpty()
     owner!: CreateRestaurantOwnerDTO;
 
     @IsString()
     @IsNotEmpty()
     name!: string;
 
-    @IsUrl()
     @IsOptional()
+    @IsString()
     logoUrl?: string;
 
     @IsString()
@@ -39,27 +45,22 @@ export class CreateRestaurantDTO {
 }
 
 export class UpdateRestaurantDTO {
-    @IsString()
     @IsOptional()
+    @IsString()
+    @IsNotEmpty()
     name?: string;
 
-    @IsUrl()
     @IsOptional()
+    @IsString()
     logoUrl?: string;
 
-    @IsString()
     @IsOptional()
+    @IsString()
+    @IsNotEmpty()
     primaryCountry?: string;
-}
-
-export enum RestaurantStatus {
-    ACTIVE = "active",
-    SUSPENDED = "suspended",
-    DISABLED = "disabled",
-    PENDING = "pending"
 }
 
 export class UpdateRestaurantStatusDTO {
     @IsEnum(RestaurantStatus)
-    status!: string;
+    status!: RestaurantStatus;
 }

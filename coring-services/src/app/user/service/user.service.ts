@@ -1,52 +1,68 @@
-import type { User } from "../entity/user.entity.js";
-import { NoUserFounderror } from "../error.js";
-import { findUserById, updateUser } from "../repo/user.repo.js";
-import type { UpdateUserDTO } from "../dto/user.dto.js";
-import { injectable } from "tsyringe";
+import {Knex} from "knex";
+import {injectable} from "tsyringe";
+import {SystemRole} from "../enums";
+import {UserNotFoundError} from "../errors";
+import {UserAlreadyExistsError} from "../../auth/errors";
+import {hashPassword} from "../../auth/utils";
+import {findUserById, findUserExistsByEmailOrPhone, createUser as createUserRepo, updateUser} from "../repository/users.repo";
+import {UpdateUserDTO} from "../dto/user.dto";
+import {User} from "../entity/user.entity";
+
+export interface CreateUserData {
+    email: string;
+    phone: string;
+    name: string;
+    password: string;
+    systemRole: SystemRole;
+}
+
 
 @injectable()
 export class UserService {
-    async getUserById(id: bigint) : Promise<Partial<User> | undefined> {
-        const user = await findUserById(id)
+    create = async (data: CreateUserData, trx?: Knex | Knex.Transaction): Promise<User> => {
+        const existing = await findUserExistsByEmailOrPhone(data.email, data.phone);
+        if (existing) {
+            throw UserAlreadyExistsError;
+        }
+        const hashedPassword = data.password ? await hashPassword(data.password) : '';
+        const now = new Date();
+        return createUserRepo({
+            email: data.email,
+            phone: data.phone,
+            name: data.name,
+            passwordHash: hashedPassword,
+            systemRole: data.systemRole,
+            createdAt: now,
+            updatedAt: now,
+        }, trx);
+    }
+
+    getByUserId = async (userId:number) => {
+        const user = await findUserById(userId);
         if(!user) {
-            throw NoUserFounderror
+            throw UserNotFoundError
         }
         return {
             id: user.id,
             email: user.email,
-            phone: user.phone,
             name: user.name,
-            system_role: user.system_role,
-            created_at: user.created_at,
-            updated_at: user.updated_at
+            phone: user.phone,
+            systemRole: user.systemRole,
         }
     }
 
-    async updateUserProfile(id: bigint, updates: UpdateUserDTO): Promise<Partial<User>> {
-        // Verify user exists
-        const user = await findUserById(id)
-        if(!user) {
-            throw NoUserFounderror
+    updateProfile = async (userId: number, data: UpdateUserDTO) => {
+        const user = await findUserById(userId);
+        if (!user) {
+            throw UserNotFoundError;
         }
-
-        // Update only allowed fields (name and phone)
-        const updatePayload: { name?: string; phone?: string } = {};
-        if (updates.name !== undefined) updatePayload.name = updates.name;
-        if (updates.phone !== undefined) updatePayload.phone = updates.phone;
-
-        const updatedUser = await updateUser(id, updatePayload);
-
+        const updated = await updateUser(userId, data);
         return {
-            id: updatedUser.id,
-            email: updatedUser.email,
-            phone: updatedUser.phone,
-            name: updatedUser.name,
-            system_role: updatedUser.system_role,
-            created_at: updatedUser.created_at,
-            updated_at: updatedUser.updated_at
-        }
+            id: updated.id,
+            email: updated.email,
+            name: updated.name,
+            phone: updated.phone,
+            systemRole: updated.systemRole,
+        };
     }
-
 }
-
-export const userService = new UserService()

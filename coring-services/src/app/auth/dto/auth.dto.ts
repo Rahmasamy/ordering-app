@@ -1,75 +1,96 @@
-import { IsEmail, IsEnum, IsOptional, IsString, Length, MinLength, ValidateNested } from "class-validator";
-import { SystemRole } from "../../user/entity/enum.js";
-import { Type } from "class-transformer";
+import {Type} from "class-transformer";
+import {
+    IsEmail,
+    MinLength,
+    IsString,
+    IsStrongPassword,
+    MaxLength,
+    IsEnum,
+    Min,
+    IsNotEmpty,
+    isString, Length, IsOptional, Validate, ValidateNested
+} from "class-validator";
+import {SystemRole} from "../../user/enums";
 
 export class RegisterDTO {
-  @IsEmail({}, { message: "Invalid email address" })
-  email!: string;
+    @IsEmail()
+    email!: string;
 
-  @Length(9, 15, {
-    message: "Phone number must be between 9 and 15 characters",
-  })
-  phone!: string;
-  @IsString()
-  @Length(2, 50, { message: "Name must be between 2 and 50 characters" })
-  name!: string;
-  @IsString()
-  @Length(8, 50, { message: "Password must be between 8 and 50 characters" })
-  password!: string;
- 
-  @IsEnum(SystemRole, { message: "Invalid system role" })
-  SystemRole!:SystemRole;
+    @MinLength(10)
+    @MaxLength(11)
+    phone!: string;
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => RestaurantUserRegisterDTO)
-  restaurnat?: RestaurantUserRegisterDTO;
+    @IsString()
+    @MinLength(1)
+    name!: string;
+
+    @IsStrongPassword({
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+
+    }, {
+        message: 'Password is not strong enough. It must contain at least 8 characters, one uppercase letter, one lowercase letter, one number.',
+    })
+    password!: string;
+
+    @IsEnum(SystemRole)
+    role!: SystemRole;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(()=> RegisterRestaurantDTO)
+    restaurant?:RegisterRestaurantDTO
 }
 
 export class LoginDTO {
-    @IsEmail({}, { message: "Invalid email address" })
+    @IsEmail()
     email!: string;
 
     @IsString()
-    @Length(8, 50, { message: "Password must be between 8 and 50 characters" })
+    @IsNotEmpty()
     password!: string;
 }
 
-export class ForgetPaaaswordDTO {
+export class ForgetPasswordDTO {
     @IsEmail()
-    email!:string;
+    email!: string;
 }
 
 export class ResetPasswordDTO {
- @IsEmail()
-  email!:string;
+    @IsEmail()
+    email!: string;
 
-  @IsString()
- 
-  otp!: string;
+    @IsString()
+    @Length(6)
+    otp!: string;
 
-    @Length(8, 50, { message: "Password must be between 8 and 50 characters" })
-  newPassword!: string;
+    @IsStrongPassword({
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
 
+    }, {
+        message: 'Password is not strong enough. It must contain at least 8 characters, one uppercase letter, one lowercase letter, one number.',
+    })
+    newPassword!: string;
 
 }
 
-export class RefreshTokenDTO {
+export class RegisterRestaurantDTO {
     @IsString()
-    refreshToken!: string;
-}
-
-export class RestaurantUserRegisterDTO {
-    @IsString()
-    @MinLength(2, { message: "Restaurant name must be at least 2 characters long" })
-    restaurantName!: string;
-
+    @MinLength(1)
+    name!: string;
 
     @IsOptional()
     @IsString()
-    logoUrl?: string;
+    logoURL?: string;
 
     @IsString()
+    @MinLength(1)
     primaryCountry!: string;
-
 }

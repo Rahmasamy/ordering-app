@@ -1,0 +1,82 @@
+import {Request, Response, NextFunction} from "express";
+import {injectable, inject} from "tsyringe";
+import {TOKENS} from "../../../lib/di/tokens";
+import {sendSuccess} from "../../../lib/http/response";
+import {validateBody} from "../../../lib/validation/validate";
+import {SystemRole} from "../../user/enums";
+import {CreateBranchDTO, UpdateBranchDTO, UpdateBranchStatusDTO} from "../dto/branch.dto";
+import {BranchService} from "../service/branch.service";
+
+@injectable()
+export class BranchController {
+    constructor(@inject(TOKENS.BranchService) private readonly branchService: BranchService) {
+    }
+
+    create = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = await validateBody(CreateBranchDTO, req.body);
+            const branch = await this.branchService.create(Number(req.params.restaurantId), req.user?.userId!, req.user?.role! as SystemRole, data);
+            sendSuccess(res, {message: "Branch created", branch}, 201);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    findNearby = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const results = await this.branchService.findNearby( Number(req.query.lat), Number(req.query.lng))
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    findByRestaurant = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const results = await this.branchService.findByRestaurant(Number(req.params.restaurantId));
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    update = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = await validateBody(UpdateBranchDTO, req.body);
+            const branch = await this.branchService.update(Number(req.params.id), req.user?.userId!, req.user?.role! as SystemRole, data);
+            sendSuccess(res, {message: "Branch updated", branch});
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    updateStatus = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = await validateBody(UpdateBranchStatusDTO, req.body);
+            const branch = await this.branchService.updateStatus(Number(req.params.id), req.user?.role! as SystemRole, data);
+            sendSuccess(res, {message: "Branch status updated", branch: {id: branch.id, isActive: branch.isActive, acceptOrders: branch.acceptOrders, commission: branch.commission}});
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    findByIdInternal = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const branch = await this.branchService.findMetadataById(Number(req.params.id));
+            sendSuccess(res, branch);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    findByIdsInternal = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const idsStr = req.query.ids as string;
+            const ids = idsStr ? idsStr.split(",").map(Number).filter(id => !isNaN(id)) : [];
+            const branches = await this.branchService.findMetadataByIds(ids);
+            sendSuccess(res, branches);
+        } catch (err) {
+            next(err);
+        }
+    }
+}

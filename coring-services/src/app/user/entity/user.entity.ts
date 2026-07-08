@@ -1,37 +1,25 @@
-import { SystemRole } from "./enum.js";
-
-type UserInput = {
-  id: bigint;
-  email: string;
-  phone: string;
-  name: string;
-  password_hash: string;
-  system_role?:SystemRole;
-  created_at?: Date;
-  updated_at?: Date;
-  deleted_at?: Date | null;
-};
+import {SystemRole} from "../enums";
 
 export class User {
-  id: bigint;
-  email: string;
-  phone: string;
-  name: string;
-  password_hash: string;
-  system_role: SystemRole;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at: Date | null;
+    id: number;
+    email: string;
+    phone: string;
+    name: string;
+    passwordHash: string;
+    systemRole: SystemRole;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
 
-  constructor(data: Partial<UserInput>) {
-    this.id = data.id!;
-    this.email = data.email!;
-    this.phone = data.phone!;
-    this.name = data.name!;
-    this.password_hash = data.password_hash!;
-    this.system_role = data.system_role ?? SystemRole.CUSTOMER;
-    this.created_at = data.created_at ?? new Date();
-    this.updated_at = data.updated_at ?? new Date();
-    this.deleted_at = data.deleted_at ?? null;
-  }
+    constructor(data: Partial <User>) {
+        this.id = data.id!;
+        this.email = data.email!;
+        this.phone = data.phone!;
+        this.name = data.name!;
+        this.passwordHash = data.passwordHash!;
+        this.systemRole = data.systemRole!;
+        this.deletedAt = data.deletedAt ?? null;
+        this.createdAt = data.createdAt ?? new Date();
+        this.updatedAt = data.updatedAt ?? new Date();
+    }
 }

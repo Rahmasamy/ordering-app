@@ -28,7 +28,10 @@ const schema = z.object({
     REDIS_HOST: z.string().default("localhost"),
     REDIS_PORT: z.string().default("6379"),
     REDIS_PASSWORD: z.string().default(""),
-    
+    MAILJET_FROM_NAME: z.string(),
+    MAILJET_API_KEY: z.string(),
+    MAILJET_SECRET_KEY: z.string(),
+    MAILJET_FROM_EMAIL: z.string(),
 
 
 })
@@ -57,5 +60,11 @@ export const env ={
         host : paredSchema.REDIS_HOST,
         port : Number(paredSchema.REDIS_PORT),
         password : paredSchema.REDIS_PASSWORD
-    } 
+    } ,
+    mailjet: {
+        fromName: paredSchema.MAILJET_FROM_NAME,
+        apiKey: paredSchema.MAILJET_API_KEY,
+        secretKey: paredSchema.MAILJET_SECRET_KEY,
+        fromEmail: paredSchema.MAILJET_FROM_EMAIL
+    }
 }
