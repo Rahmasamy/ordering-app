@@ -1,0 +1,6 @@
+{
+  "name": "OrderFlow Pro",
+  "description": "Premium food ordering interface and SaaS Merchant command center with product-creation wizards, branch analytics and menu optimization tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

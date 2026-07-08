@@ -1,0 +1,1 @@
+export { default as ProductWizard } from './components/ProductWizard';

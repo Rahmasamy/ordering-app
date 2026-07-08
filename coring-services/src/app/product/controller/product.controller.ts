@@ -1,126 +1,205 @@
-import type { Request, Response, NextFunction } from "express";
-import { sendSuccessResponse } from "../../../lib/http/response.js";
-import { productService, type ProductService } from "../services/product.service.js";
-import { CreateProductDTO, UpdateProductDTO } from "../dto/product.dto.js";
-import { validateBody } from "../../../lib/validation/validate.js";
-import { injectable, inject } from "tsyringe";
-import { TOKENS } from "../../../lib/di/tokens.js";
+import {Request, Response, NextFunction} from "express";
+import {injectable, inject} from "tsyringe";
+import {TOKENS} from "../../../lib/di/tokens";
+import {sendSuccess, sendPaginated} from "../../../lib/http/response";
+import {validateBody} from "../../../lib/validation/validate";
+import {SystemRole} from "../../user/enums";
+import {CreateProductDTO, UpdateProductDTO} from "../dto/product.dto";
+import {CreateCategoryDTO} from "../dto/category.dto";
+import {ProductService} from "../service/product.service";
+import {parsePaginationQuery, parseFilters} from "../../../lib/http/pagination/parse-query";
+import {AppError} from "../../../lib/error/AppError";
+import {db} from "../../../lib/knex/knex";
+import {logActivity} from "../../analytics/repository/activity-log.repository";
 
 @injectable()
 export class ProductController {
     constructor(@inject(TOKENS.ProductService) private readonly productService: ProductService) {}
-    async findCategories(req: Request, res: Response, next: NextFunction) {
+
+    create = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const restaurantId = parseInt(req.params.restaurantId as string, 10);
-            if (isNaN(restaurantId)) {
-                res.status(400).json({ success: false, message: "Invalid restaurant ID" });
-                return;
-            }
-            
-            const categories = await this.productService.findCategories(restaurantId);
-            sendSuccessResponse(res, categories);
-        } catch (error) {
-            next(error);
+            const data = await validateBody(CreateProductDTO, req.body);
+            const restaurantId = Number(req.params.restaurantId);
+            const product = await this.productService.create(
+                restaurantId,
+                req.user?.userId!,
+                req.user?.role! as SystemRole,
+                data,
+            );
+
+            // Log activity
+            const userObj = await db("users").where({ id: req.user?.userId }).first();
+            const userName = userObj ? userObj.name : (req.user?.email || "System");
+            await logActivity(
+                restaurantId,
+                req.user?.userId || null,
+                userName,
+                `Created new menu item: ${data.name}`,
+                "update",
+                `Category: ${data.categoryName || "Uncategorized"} - Calories: ${data.calories || "N/A"}`
+            );
+
+            sendSuccess(res, {message: "Product created", product}, 201);
+        } catch (err) {
+            next(err);
         }
     }
 
-    async findByBranch(req: Request, res: Response, next: NextFunction) {
+    getAll = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const branchId = parseInt(req.params.branchId as string, 10);
-            if (isNaN(branchId)) {
-                res.status(400).json({ success: false, message: "Invalid branch ID" });
-                return;
-            }
-            
-            const responseData = await this.productService.findByBranch(branchId);
-            sendSuccessResponse(res, responseData);
-        } catch (error) {
-            next(error);
+            const params = parsePaginationQuery(req.query, ['createdAt', 'name']);
+            const filters = parseFilters(req.query, ['id', 'name', 'restaurantId', 'isTrending']);
+            const result = await this.productService.findAll(params, filters);
+            sendPaginated(res, result.data, result.meta);
+        } catch (err) {
+            next(err);
         }
     }
 
-    async findByRestaurant(req: Request, res: Response, next: NextFunction) {
+    getTrending = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const restaurantId = parseInt(req.params.restaurantId as string, 10);
-            if (isNaN(restaurantId)) {
-                res.status(400).json({ success: false, message: "Invalid restaurant ID" });
-                return;
-            }
-            
-            const user = (req as any).user;
-            const userId = parseInt(user.userId, 10);
-            const role = user.role;
-            
-            const responseData = await this.productService.findByRestaurant(restaurantId, userId, role);
-            sendSuccessResponse(res, responseData);
-        } catch (error) {
-            next(error);
+            const limit = req.query.limit ? Number(req.query.limit) : 10;
+            const results = await this.productService.findTrending(limit);
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
         }
     }
 
-    async findById(req: Request, res: Response, next: NextFunction) {
+    findByRestaurant = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = parseInt(req.params.id as string, 10);
-            if (isNaN(id)) {
-                res.status(400).json({ success: false, message: "Invalid product ID" });
-                return;
-            }
-            
-            const product = await this.productService.findById(id);
-            sendSuccessResponse(res, product);
-        } catch (error) {
-            next(error);
+            const results = await this.productService.findByRestaurant(
+                Number(req.params.restaurantId),
+                req.user?.userId!,
+                req.user?.role! as SystemRole,
+            );
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
         }
     }
 
-    async create(req: Request, res: Response, next: NextFunction) {
+    findCategories = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const restaurantId = parseInt(req.params.restaurantId as string, 10);
-            if (isNaN(restaurantId)) {
-                res.status(400).json({ success: false, message: "Invalid restaurant ID" });
-                return;
-            }
-            
-            const user = (req as any).user;
-            const userId = parseInt(user.userId, 10);
-            const role = user.role;
-            
-            const payload = await validateBody(CreateProductDTO, req.body);
-            
-            const responseData = await this.productService.create(restaurantId, userId, role, payload);
-            sendSuccessResponse(res, responseData, 201);
-        } catch (error) {
-            next(error);
+            const results = await this.productService.findCategories(Number(req.params.restaurantId));
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
         }
     }
 
-    async update(req: Request, res: Response, next: NextFunction) {
+    findRestaurantCategories = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = parseInt(req.params.id as string, 10);
-            if (isNaN(id)) {
-                res.status(400).json({ success: false, message: "Invalid product ID" });
-                return;
+            let restaurantId = req.user?.restaurantId;
+            if (req.user?.role === SystemRole.SYSTEM_ADMIN) {
+                restaurantId = req.query.restaurantId ? Number(req.query.restaurantId) : undefined;
             }
-
-            const branchIdQuery = req.query.branchId as string;
-            const branchId = branchIdQuery ? parseInt(branchIdQuery, 10) : undefined;
-            if (branchIdQuery && isNaN(branchId as number)) {
-                res.status(400).json({ success: false, message: "Invalid branch ID" });
-                return;
+            if (!restaurantId) {
+                throw new AppError("Restaurant ID is required", 400);
             }
+            const results = await this.productService.findCategories(restaurantId);
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
+        }
+    }
 
-            const user = (req as any).user;
-            const userId = parseInt(user.userId, 10);
-            const role = user.role;
-            
-            const payload = await validateBody(UpdateProductDTO, req.body);
-            
-            const responseData = await this.productService.update(id, branchId, userId, role, payload);
-            sendSuccessResponse(res, responseData);
-        } catch (error) {
-            next(error);
+    createCategory = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            let restaurantId = req.user?.restaurantId;
+            if (req.user?.role === SystemRole.SYSTEM_ADMIN) {
+                restaurantId = req.query.restaurantId ? Number(req.query.restaurantId) : undefined;
+            }
+            if (!restaurantId) {
+                throw new AppError("Restaurant ID is required", 400);
+            }
+            const data = await validateBody(CreateCategoryDTO, req.body);
+            const { category, created } = await this.productService.getOrCreateCategory(restaurantId, data.name);
+            sendSuccess(res, {
+                message: created ? "Category created" : "Category already exists",
+                category
+            }, created ? 201 : 200);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    getAllCategories = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const results = await this.productService.findAllCategories();
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    findByBranch = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const results = await this.productService.findByBranch(Number(req.params.branchId));
+            sendSuccess(res, results);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    findById = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const product = await this.productService.findById(Number(req.params.id));
+            sendSuccess(res, product);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    update = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = await validateBody(UpdateProductDTO, req.body);
+            const branchId = req.query.branchId ? Number(req.query.branchId) : undefined;
+            const result = await this.productService.update(
+                Number(req.params.id),
+                req.user?.userId!,
+                req.user?.role! as SystemRole,
+                data,
+                branchId,
+            );
+            sendSuccess(res, {message: "Product updated", ...result});
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    findProductsByBranchAndIdsInternal = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const branchId = Number(req.params.branchId);
+            const idsStr = req.query.ids as string;
+            const productIds = idsStr ? idsStr.split(",").map(Number).filter(id => !isNaN(id)) : [];
+            const products = await this.productService.findProductsByBranchAndIds(branchId, productIds);
+            sendSuccess(res, products);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    reserveStockInternal = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const branchId = Number(req.params.branchId);
+            const {items} = req.body;
+            const result = await this.productService.reserveStock(branchId, items);
+            sendSuccess(res, result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    releaseStockInternal = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const branchId = Number(req.params.branchId);
+            const {items} = req.body;
+            const result = await this.productService.releaseStock(branchId, items);
+            sendSuccess(res, result);
+        } catch (err) {
+            next(err);
         }
     }
 }
 
-export const productController = new ProductController(productService);

@@ -1,3 +1,3 @@
-import knexConfig from './src/common/knex/knexConfig.js';
+import knexConfig from './src/lib/knex/knexConfig';
 
 export default knexConfig;

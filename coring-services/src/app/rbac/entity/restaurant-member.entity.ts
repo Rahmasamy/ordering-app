@@ -1,4 +1,4 @@
-import  { MemberStatus } from "../enums.js";
+import {MemberStatus} from "../enums";
 
 export class RestaurantMember{
     id: number;

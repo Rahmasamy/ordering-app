@@ -1,0 +1,11 @@
+export { default as CustomerCheckout } from './components/CustomerCheckout';
+export { default as CustomerConfirmation } from './components/CustomerConfirmation';
+export { default as CustomerFaq } from './components/CustomerFaq';
+export { default as CustomerHome } from './components/CustomerHome';
+export { default as CustomerOffers } from './components/CustomerOffers';
+export { default as CustomerPrivacy } from './components/CustomerPrivacy';
+export { default as ProductDetail } from './components/ProductDetail';
+export { default as PaymentGateway } from './components/PaymentGateway';
+export { default as CustomerOrders } from './components/CustomerOrders';
+export { default as PaymentReturn } from './components/PaymentReturn';
+export { default as PaymentFailed } from './components/PaymentFailed';

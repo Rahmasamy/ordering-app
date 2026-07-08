@@ -1,13 +1,14 @@
 declare namespace Express {
-     interface Request {
+    interface Request {
         correlationId?: string;
         user?: {
-            userId:string;
-            role:string;
-            email:string;
-            restaurantId?:number;
-            restaurantRoleName?:string;
-            branchIds?:number[];
+            userId: number;
+            role: string;
+            email: string;
+            // for restaurant users only
+            restaurantId?: number;
+            restaurantRole?: string;
+            branchIds?: number[];
         }
     }
 }

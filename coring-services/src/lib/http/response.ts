@@ -1,36 +1,19 @@
-import type { Response } from "express";
-import type { PaginateResponse } from "../../pkg/pagination/pagination-cursor.js";
+import {Response} from "express";
+import {PaginationMeta} from "./pagination/cursor-pagination";
 
-
-export interface ApiResponse<T=unknown> {
-  data?:T ;
-metadata?:Object;
-success:boolean;
-
+export interface ApiResponse <T =unknown> {
+    success: boolean;
+    data?: T;
+    meta?: Object;
 }
 
+export function sendSuccess<T>(res: Response,data: T, statusCode = 200, meta?: Object) {
+    const body : ApiResponse<T> = {success: true, data: data};
 
-
-
-export const sendSuccessResponse = <T>(res:Response,data?:T,statusCode:number = 200,metadata?:Object)=>{
-  const body:ApiResponse<T> = {
-    success:true,
-  }
-  
-  if (data !== undefined) {
-    body.data = data;
-  }
-  
-  if(metadata)
-    body.metadata = metadata;
-  
-  res.status(statusCode).json(body)
+    if(meta) body.meta = meta;
+    res.status(statusCode).json(body);
 }
 
-export function sendPaginateResponse<T>(res:Response,data:T[],metadata:PaginateResponse){
-  res.status(200).json({
-    success:true,
-    metadata,
-    data
-  })   
+export function sendPaginated<T>(res: Response, data: T[], meta: PaginationMeta) {
+    res.status(200).json({success: true, data: data, meta});
 }
